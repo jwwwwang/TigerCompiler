@@ -1,6 +1,7 @@
 package Parse;
 import ErrorMsg.ErrorMsg;
-%%
+
+%% 
 
 %implements Lexer
 %function nextToken
@@ -10,40 +11,38 @@ import ErrorMsg.ErrorMsg;
 %{
 StringBuffer string = new StringBuffer();
 int count;
-
 private void newline() {
-	errorMsg.newline(yychar);
+  errorMsg.newline(yychar);
 }
 
 private void err(int pos, String s) {
-	errorMsg.error(pos,s);
+  errorMsg.error(pos,s);
 }
 
 private void err(String s) {
-	err(yychar,s);
+  err(yychar,s);
 }
 
 private java_cup.runtime.Symbol tok(int kind, Object value) {
-	return new java_cup.runtime.Symbol(kind, yychar, yychar+yylength(),
-	value);
+    return new java_cup.runtime.Symbol(kind, yychar, yychar+yylength(), value);
 }
 
-private ErrorMsg errorMsg;
-	Yylex(java.io.InputStream s, ErrorMsg e) {
-	this(s);
-	errorMsg=e;
+private ErrorMsg.ErrorMsg errorMsg;
+
+Yylex(java.io.InputStream s, ErrorMsg.ErrorMsg e) {
+  this(s);
+  errorMsg=e;
 }
 
 %}
 
 %eofval{
-	{
-		if (yystate()==COMMENT) err("Comment symbol don't match!");
-		if (yystate()==STRING) err("String presentation error!");
-		if (yystate()==STRING1) err("String presentation error!");
-		return tok(sym.EOF, null);
-	}
-%eofval}
+{if (yystate()==COMMENT) err("Comment symbol don't match!");
+if (yystate()==STRING) err("String presentation error!");
+if (yystate()==STRING1) err("String presentation error!");
+return tok(sym.EOF, null);
+}
+%eofval}       
 
 LineTerminator = \n|\r|\r\n|\n\r
 Identifier = [a-zA-Z][:jletterdigit:]*
@@ -71,7 +70,6 @@ WhiteSpace = \n|\r|\r\n|\t|\f|\n\r
 <YYINITIAL> "|" {return tok(sym.OR,null);}
 <YYINITIAL> ">" {return tok(sym.GT,null);}
 <YYINITIAL> ">=" {return tok(sym.GE,null);}
-
 <YYINITIAL> "<" {return tok(sym.LT,null);}
 <YYINITIAL> "<=" {return tok(sym.LE,null);}
 <YYINITIAL> "of" {return tok(sym.OF,null);}
@@ -105,34 +103,33 @@ WhiteSpace = \n|\r|\r\n|\t|\f|\n\r
 <YYINITIAL> "<>" {return tok(sym.NEQ,null);}
 <YYINITIAL> {Identifier} {return tok(sym.ID,yytext());}
 <YYINITIAL> {DecIntegerLiteral}
-{return tok(sym.INT,new Integer(yytext()));}
+{return tok(sym.NUM,new Integer(yytext()));}
 <YYINITIAL> [^] {err("Illegal character < "+yytext()+" >!");}
 
 <STRING> {
-	\" {yybegin(YYINITIAL);return tok(sym.STRING,string.toString());}
-
-	\\[0-9][0-9][0-9]
-		{ int tmp=Integer.parseInt(yytext().substring(1, 4));
-		if(tmp>255) err("exceed \\ddd"); else string.append((char)tmp);}
-	[^\n\t\"\\]+ {string.append(yytext());}
-	\\t {string.append('\t');}
-	\\n {string.append('\n');}
-	\\\" {string.append('\"');}
-	\\\\ {string.append('\\');}
-	{LineTerminator} {err("String presentation error!");}
-	\\ {yybegin(STRING1);}
+\" {yybegin(YYINITIAL);return tok(sym.STR,string.toString());}
+\\[0-9][0-9][0-9]
+	{ int tmp=Integer.parseInt(yytext().substring(1, 4));
+	if(tmp>255) err("exceed \\ddd"); else string.append((char)tmp);}
+[^\n\t\"\\]+ {string.append(yytext());}
+\\t {string.append('\t');}
+\\n {string.append('\n');}
+\\\" {string.append('\"');}
+\\\\ {string.append('\\');}
+{LineTerminator} {err("String presentation error!");}
+\\ {yybegin(STRING1);}
 }
 
 <STRING1> {
-	{WhiteSpace} {}
-	" " {}
-	\\ {yybegin(STRING);}
-	\" {err("\\dont match");}
-	[^] {string.append(yytext());}
+{WhiteSpace} {}
+" " {}
+\\ {yybegin(STRING);}
+\" {err("\\dont match");}
+[^] {string.append(yytext());}
 }
 
 <COMMENT> {
-	"/*" {count++;}
-	"*/" {count--;if (count==0) {yybegin(YYINITIAL);}}
-	[^] {}
+"/*" {count++;}
+"*/" {count--;if (count==0) {yybegin(YYINITIAL);}}
+[^] {}
 }
